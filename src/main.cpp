@@ -1,18 +1,43 @@
+#include "bsp.h"
 #include <Arduino.h>
 
-// put function declarations here:
-int myFunction(int, int);
+void InitSystem();
+void InitApplication();
+void MyProgram();
 
-void setup() {
-  // put your setup code here, to run once:
-  int result = myFunction(2, 3);
+void setup()
+{
+  InitSystem();
+  InitApplication();
 }
 
-void loop() {
-  // put your main code here, to run repeatedly:
+void InitSystem()
+{
+  Serial.begin(115200);
+  initBSP();
 }
 
-// put function definitions here:
-int myFunction(int x, int y) {
-  return x + y;
+void InitApplication()
+{
+  // Initialize your application-specific settings here
+}
+
+void MyProgram()
+{
+  // Example usage of authentication
+  if (authenticate())
+  {
+    Serial.println("Authenticated successfully");
+  }
+  else
+  {
+    Serial.println("Authentication failed");
+  }
+  delay(1000);
+}
+
+void loop()
+{
+  MyProgram();
+  delay(10);
 }
