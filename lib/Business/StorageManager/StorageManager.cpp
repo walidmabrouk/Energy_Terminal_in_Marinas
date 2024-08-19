@@ -1,12 +1,14 @@
 #include "StorageManager.hpp"
 #include <iostream>
 
-std::string StorageManager::readData()
+StorageManager::StorageManager(IFile *file) : file(file) {}
+
+std::string StorageManager::readData() const
 {
-  return "Data read from storage";
+  return file->readFile();
 }
 
 void StorageManager::saveData(const std::string &data)
 {
-  std::cout << "Data saved to storage: " << data << std::endl;
+  file->saveData(data);
 }

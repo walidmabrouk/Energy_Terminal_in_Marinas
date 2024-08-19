@@ -15,7 +15,7 @@ public:
   ~File();
 
   std::string readFile() override;
-  void saveFile(std::string content) override;
+  void saveData(std::string content) override;
 
 private:
   bool openFileForReading();
@@ -23,4 +23,4 @@ private:
   void closeFile();
 };
 
-#endif // FILE_HPP
+#endif 

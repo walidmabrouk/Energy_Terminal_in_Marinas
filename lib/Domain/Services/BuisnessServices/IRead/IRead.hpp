@@ -7,8 +7,7 @@ class IRead
 {
 public:
   virtual ~IRead() = default;
-
-  virtual std::string readData() const = 0;
+  virtual std::string readData() const = 0; 
 };
 
-#endif // IREAD_HPP
+#endif 

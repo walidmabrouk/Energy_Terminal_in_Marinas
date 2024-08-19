@@ -2,7 +2,6 @@
 
 struct IFile
 {
-
   virtual std::string readFile() = 0;
-  virtual void saveFile(std::string content) = 0;
+  virtual void saveData(std::string content) = 0;
 };

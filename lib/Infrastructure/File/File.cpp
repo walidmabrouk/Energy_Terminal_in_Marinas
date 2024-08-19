@@ -25,7 +25,7 @@ std::string File::readFile()
   return content;
 }
 
-void File::saveFile(std::string content)
+void File::saveData(std::string content)
 {
   if (!openFileForWriting())
   {
