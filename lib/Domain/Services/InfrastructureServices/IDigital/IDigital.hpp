@@ -1,6 +1,13 @@
-struct IDigital
-{
+#ifndef IDIGITAL_HPP
+#define IDIGITAL_HPP
 
-  virtual unsigned char digitalRead(unsigned char address) = 0;
-  virtual void digitalWrite(unsigned char address, unsigned char value) = 0;
+class IDigital
+{
+public:
+  virtual ~IDigital() = default;
+
+  virtual void writeDigitalPin(int pin, bool value) = 0;
+  virtual bool readDigitalPin(int pin) const = 0;
 };
+
+#endif 

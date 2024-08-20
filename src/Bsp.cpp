@@ -1,9 +1,14 @@
-#include "bsp.h"
+#include "BSP.hpp"
 
 void initBSP()
 {
-  // Initialize any hardware components or pins here
-  pinMode(RFID_PIN_Data_0, INPUT_PULLUP);
-  pinMode(RFID_PIN_Data_1, INPUT_PULLUP);
-  pinMode(RFID_PIN_CP, OUTPUT);
+  // Initialize RFID pins
+  pinMode(BSP::RFID_PIN_DATA_0, INPUT_PULLUP);
+  pinMode(BSP::RFID_PIN_DATA_1, INPUT_PULLUP);
+  pinMode(BSP::RFID_PIN_CP, OUTPUT);
+
+  // Initialize terminal control pin
+  pinMode(BSP::TERMINAL_PIN, OUTPUT);
+  pinMode(BSP::WATER_PIN, OUTPUT);
+  pinMode(BSP::ELECTRICITY_PIN, OUTPUT);
 }
