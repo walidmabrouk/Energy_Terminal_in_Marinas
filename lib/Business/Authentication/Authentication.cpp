@@ -50,9 +50,9 @@ std::string Authentication::readRFIDTagFromRfidReader() const
 
 bool Authentication::isCardActivated(const std::string &rfidTag) const
 {
-  if (user.getDisableDate > dateSystem)
-  {
-    return false;
-  }
+  // if (user.getDisableDate > dateSystem)
+  // {
+  //   return false;
+  // }
   return true;
 }

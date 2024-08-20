@@ -14,17 +14,22 @@ void setup()
 void InitSystem()
 {
   Serial.begin(115200);
+  if (!LittleFS.begin())
+  {
+    Serial.println("An Error has occurred while mounting LittleFS");
+    return;
+  }
+  Serial.println("LittleFS mounted successfully");
   initBSP();
 }
 
 void InitApplication()
 {
-  // Initialize your application-specific settings here
+
 }
 
 void MyProgram()
 {
-  // Example usage of authentication
   if (authenticate())
   {
     Serial.println("Authenticated successfully");
