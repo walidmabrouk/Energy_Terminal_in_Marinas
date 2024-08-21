@@ -1,10 +1,11 @@
 #ifndef AUTHENTICATION_HPP
 #define AUTHENTICATION_HPP
 
-#include "../lib/Domain/Services/BuisnessServices/IAuthentication/IAuthentication.hpp"
-#include "../lib/Domain/Services/InfrastructureServices/IRfidCommunication/IRfidCommunication.hpp"
-#include "../lib/Domain/Services/BuisnessServices/IRead/IRead.hpp"
-#include "../lib/Domain/Entities/User/User.hpp"
+
+#include "../../lib/Domain/Services/InfrastructureServices/IRfidCommunication/IRfidCommunication.hpp"
+#include "../../lib/Domain/Services/BuisnessServices/IRead/IRead.hpp"
+#include "../../lib/Domain/Services/BuisnessServices/IAuthentication/IAuthentication.hpp"
+#include "../../lib/Domain/Entities/User/User.hpp"
 #include <string>
 
 class Authentication : public IAuthentication

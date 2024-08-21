@@ -2,9 +2,9 @@
 #define STORAGE_MANAGER_HPP
 
 #include <string>
-#include "../lib/Domain/Services/BuisnessServices/IRead/IRead.hpp"
-#include "../lib/Domain/Services/BuisnessServices/ISave/ISave.hpp"
-#include "../lib/Domain/Services/InfrastructureServices/IFile/IFile.hpp"
+#include "../../lib/Domain/Services/BuisnessServices/IRead/IRead.hpp"
+#include "../../lib/Domain/Services/BuisnessServices/ISave/ISave.hpp"
+#include "../../lib/Domain/Services/InfrastructureServices/IFile/IFile.hpp"
 
 class StorageManager : public IRead, public ISave
 {
