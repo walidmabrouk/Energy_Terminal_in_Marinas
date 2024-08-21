@@ -8,17 +8,18 @@ class User
 {
 private:
   int32_t _idUser;
-  std::string _rfidTag;
+  std::string _rfidCard;
   std::string _activationDate;
   std::string _disableDate;
   int64_t _maxElectricImpulseNumber;
   int64_t _maxWaterImpulseNumber;
 
 public:
-  // Constructor
+  // Constructors
   User(int32_t idUser, const std::string &rfidCard, const std::string &activationDate,
        const std::string &disableDate, int64_t maxElectricImpulseNumber, int64_t maxWaterImpulseNumber);
-  User();
+  User(); // Default constructor
+
   // Getters and setters
   int32_t getIdUser() const;
   void setIdUser(int32_t idUser);

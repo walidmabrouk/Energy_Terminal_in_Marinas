@@ -10,6 +10,13 @@ User::User(int32_t idUser, const std::string &rfidCard, const std::string &activ
   // Initialize other members if needed
 }
 
+// Default constructor
+User::User()
+    : _idUser(0), _rfidCard(""), _activationDate(""), _disableDate(""),
+      _maxElectricImpulseNumber(0), _maxWaterImpulseNumber(0)
+{
+}
+
 // Getter for _idUser
 int32_t User::getIdUser() const
 {

@@ -1,15 +1,31 @@
-#include "./BrokerCommunication.hpp"
+#include "BrokerCommunication.hpp"
 
-void BrokerCommunication::sendCommand(std::string topic, std::string payload)
+// Constructor
+BrokerCommunication::BrokerCommunication(Client &client) : client(client) {}
+
+// Destructor
+BrokerCommunication::~BrokerCommunication() {}
+
+// Send command with string payload
+void BrokerCommunication::sendCommand(const std::string &topic, const std::string &payload)
 {
-  client.publish(topic.c_str(), payload.c_str());
+  if (!client.publish(topic.c_str(), payload.c_str()))
+  {
+    // Handle publish error (optional)
+  }
 }
 
-void BrokerCommunication::sendCommand(std::string topic, const uint8_t &payload, const uint16_t size)
+// Send command with byte array payload
+void BrokerCommunication::sendCommand(const std::string &topic, const uint8_t *payload, uint16_t size)
 {
+  if (!client.publish(topic.c_str(), payload, size))
+  {
+    // Handle publish error (optional)
+  }
 }
 
-void BrokerCommunication::subscribe(std::function<void(char *, uint8_t *, uint8_t)> function)
+// Subscribe to a topic with a callback function
+void BrokerCommunication::subscribe(const std::function<void(char *, uint8_t *, uint8_t)> &callback)
 {
-  client.setCallback(function);
+  client.setCallback(callback);
 }
