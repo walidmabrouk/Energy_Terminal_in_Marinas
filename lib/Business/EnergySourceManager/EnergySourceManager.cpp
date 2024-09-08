@@ -35,5 +35,5 @@ void EnergySourceManager::disableElectricity()
 
 void EnergySourceManager::setPinState(int pin, bool state)
 {
-  m_digitalInterface.writeDigitalPin(pin, state);
+  m_digitalInterface.digitalWrite(pin, state);
 }

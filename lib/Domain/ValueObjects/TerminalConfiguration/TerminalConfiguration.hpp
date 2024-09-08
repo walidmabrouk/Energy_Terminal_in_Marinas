@@ -10,20 +10,16 @@ private:
   std::string _wifiPassword;
 
 public:
-  // Constructor
   TerminalConfiguration(const std::string &wifiSSID, const std::string &wifiPassword);
-  
-  // Getter for _wifiSSID
-  std::string getWifiSSID() const;
 
-  // Setter for _wifiSSID
+  std::string getWifiSSID() const;
   void setWifiSSID(const std::string &newWifiSSID);
 
-  // Getter for _wifiPassword
   std::string getPassword() const;
-
-  // Setter for _wifiPassword
   void setPassword(const std::string &newPassword);
+
+  void loadFromFile(const std::string &filename);
+  void saveToFile(const std::string &filename) const;
 };
 
 #endif // TERMINALCONFIGURATION_HPP

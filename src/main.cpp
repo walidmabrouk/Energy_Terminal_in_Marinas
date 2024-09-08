@@ -1,104 +1,49 @@
-#include "BSP.hpp"
 #include <Arduino.h>
-#include <WiFi.h>
-#include <PubSubClient.h>
+#include <LittleFS.h>
+#include "../Domain/Services/InfrastructureServices/IFile/IFile.hpp"
+#include "../lib/Infrastructure/File/MyFile.hpp"
+#include "../Domain/Services/InfrastructureServices/IRfidCommunication/IRfidCommunication.hpp"
+#include "../lib/Infrastructure/RfidCommunication/RfidCommunication.hpp"
+#include "../lib/Business/Authentication/Authentication.hpp"
 
-const char *wifi_ssid = "H267A_C0BE_2.4G";
-const char *wifi_pass = "xQ9Zks6N";
-const char *mqtt_server = "192.168.100.61";
-const char *inTopic = "home/livingroom/temperature"; // Define your input topic
-const char *outTopic = "home/livingroom/response";   // Define your output topic
+// Create instances of IFile and IRfidCommunication implementations
+IRead *fileHandler = new MyFile();                        // Ensure MyFile implements IFile
+IRfidCommunication *rfidReader = new RfidCommunication(); // Ensure RfidCommunication implements IRfidCommunication
 
-WiFiClient espClient;
-PubSubClient client(espClient);
-
-void callback(char *topic, byte *payload, unsigned int length)
-{
-  Serial.print("Received message on topic: ");
-  Serial.println(topic);
-  Serial.print("Message: ");
-  for (int i = 0; i < length; i++)
-  {
-    Serial.print((char)payload[i]);
-  }
-  Serial.println();
-}
-
-void reconnect()
-{
-  while (!client.connected())
-  {
-    Serial.print("\nConnecting to ");
-    Serial.println(mqtt_server);
-    if (client.connect("koikoikoi"))
-    {
-      Serial.print("\nConnected to ");
-      Serial.println(mqtt_server);
-      client.subscribe(inTopic); // Subscribe to the input topic
-    }
-    else
-    {
-      Serial.print("\nFailed to connect, trying again in 5 seconds");
-      delay(5000);
-    }
-  }
-}
-
-void setupWifi()
-{
-  delay(100);
-  Serial.print("\nConnecting to ");
-  Serial.println(wifi_ssid);
-  WiFi.begin(wifi_ssid, wifi_pass);
-  while (WiFi.status() != WL_CONNECTED)
-  {
-    delay(100);
-    Serial.print("-");
-  }
-  Serial.print("\nConnected to ");
-  Serial.println(wifi_ssid);
-}
+// Create an instance of Authentication with the required arguments
+Authentication *authentication = new Authentication("path/to/database", fileHandler, rfidReader);
 
 void InitSystem()
 {
   Serial.begin(115200);
-  setupWifi();
   if (!LittleFS.begin())
   {
-    Serial.println("An Error has occurred while mounting LittleFS");
+    Serial.println("Failed to mount LittleFS");
+    while (1)
+      ; // Halt if LittleFS fails to initialize
   }
-
-  Serial.println("LittleFS mounted successfully");
-  initBSP();
-
-  // Set MQTT broker
-  client.setServer(mqtt_server, 1883);
-  client.setCallback(callback);
 }
 
 void InitApplication()
 {
-  digitalWrite(BSP::TERMINAL_PIN, LOW);
-  digitalWrite(BSP::WATER_PIN, LOW);
-  digitalWrite(BSP::ELECTRICITY_PIN, LOW);
+  // Initialization code for your application, if needed
+}
+
+void TestAuthentication()
+{
+  if (authentication->authenticate())
+  {
+    Serial.println("Authentication successful!");
+  }
+  else
+  {
+    Serial.println("Authentication failed.");
+  }
 }
 
 void MyProgram()
 {
-  if (!client.connected())
-  {
-    reconnect();
-  }
-  client.loop();
-
-  // if (authenticate())
-  // {
-  //     Serial.println("Authenticated successfully");
-  // }
-  // else
-  // {
-  //     Serial.println("Authentication failed");
-  // }
+  TestAuthentication();
   delay(1000);
 }
 
@@ -110,20 +55,13 @@ void setup()
 
 void loop()
 {
-  // unsigned long currentTime = millis();
-  // static unsigned long lastTime = 0;
-  // static int count = 0;
-  // char messages[75];
-
-  // if (currentTime - lastTime > 2000)
-  // {
-  //   count++;
-  //   snprintf(messages, 75, "%d", count);
-  //   Serial.print("Sending message: ");
-  //   Serial.println(messages);
-  //   client.publish(outTopic, messages);
-  //   lastTime = millis();
-  // }
   MyProgram();
   delay(10);
+}
+
+void cleanup()
+{
+  delete authentication;
+  delete fileHandler;
+  delete rfidReader;
 }

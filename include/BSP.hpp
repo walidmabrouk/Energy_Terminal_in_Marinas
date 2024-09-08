@@ -4,7 +4,6 @@
 #include <Arduino.h>
 #include <LittleFS.h>
 #include "../lib/Business/Authentication/Authentication.hpp"
-
 namespace BSP
 {
   // Pin definitions for RFID
@@ -21,5 +20,4 @@ namespace BSP
 void initBSP();
 
 bool authenticate();
-
 #endif // BSP_HPP

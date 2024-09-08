@@ -4,10 +4,9 @@
 class IDigital
 {
 public:
-  virtual ~IDigital() = default;
-
-  virtual void writeDigitalPin(int pin, bool value) = 0;
-  virtual bool readDigitalPin(int pin) const = 0;
+  virtual void digitalWrite(unsigned char address, unsigned char value) = 0;
+  virtual unsigned char digitalRead(unsigned char address) const = 0;
+  virtual ~IDigital() {} // Virtual destructor
 };
 
-#endif 
+#endif // IDIGITAL_HPP

@@ -1,21 +1,18 @@
-#ifndef FILE_HPP
-#define FILE_HPP
-
 #include <Arduino.h>
 #include <LittleFS.h>
 #include "../Domain/Services/InfrastructureServices/IFile/IFile.hpp"
+#include "../Domain/Services/BuisnessServices/IRead/IRead.hpp"
 
-class File : public IFile
+class MyFile : public IFile , public IRead
 {
 private:
   fs::File file;
 
 public:
-  File();
-  ~File();
+
 
   std::string readFile() override;
-  void saveData(std::string content) override;
+  void saveData(const std::string &content) override;
 
 private:
   bool openFileForReading();
@@ -23,4 +20,4 @@ private:
   void closeFile();
 };
 
-#endif 
+

@@ -15,7 +15,7 @@ enum class RfidState
   CODE_RECEIVED
 };
 
-class RfidCommunication : IRfidCommunication
+class RfidCommunication : public IRfidCommunication // Ensure you use 'public' inheritance
 {
 private:
   RfidState currentState;
@@ -49,4 +49,4 @@ public:
   std::string readRFID() const;
 };
 
-#endif 
+#endif // RFID_COMMUNICATION_HPP
