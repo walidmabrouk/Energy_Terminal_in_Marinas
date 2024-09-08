@@ -9,9 +9,10 @@
 class StorageManager : public IRead, public ISave
 {
 public:
-  StorageManager(IFile *file);
-  std::string readData() const override;
-  void saveData(const std::string &data) override;
+  explicit StorageManager(IFile *file);
+
+  std::string getData(const std::string &key, const std::string &field) const override;
+  void persistData(const std::string &key, const std::string &field, bool value) override;
 
 private:
   IFile *file;

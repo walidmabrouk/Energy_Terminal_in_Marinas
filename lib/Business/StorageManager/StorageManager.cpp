@@ -1,14 +1,14 @@
 #include "StorageManager.hpp"
-#include <iostream>
 
 StorageManager::StorageManager(IFile *file) : file(file) {}
 
-std::string StorageManager::readData() const
+std::string StorageManager::getData(const std::string &key, const std::string &field) const
 {
-  return file->readFile();
+  return file->readFile(key, field);
 }
 
-void StorageManager::saveData(const std::string &data)
+void StorageManager::persistData(const std::string &key, const std::string &field, bool value)
 {
-  file->saveData(data);
+  const std::string data = value ? "true" : "false";
+  file->saveData(key, field, data);
 }
