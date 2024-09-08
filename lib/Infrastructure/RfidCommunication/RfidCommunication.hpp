@@ -2,7 +2,7 @@
 #define RFID_COMMUNICATION_HPP
 
 #include <Arduino.h>
-#include "../lib/Domain/Services/InfrastructureServices/IRfidCommunication/IRfidCommunication.hpp"
+#include "../../Domain/Services/InfrastructureServices/IRfidCommunication/IRfidCommunication.hpp"
 
 enum class RfidState
 {
@@ -15,7 +15,7 @@ enum class RfidState
   CODE_RECEIVED
 };
 
-class RfidCommunication : public IRfidCommunication // Ensure you use 'public' inheritance
+class RfidCommunication : public IRfidCommunication
 {
 private:
   RfidState currentState;
@@ -39,14 +39,14 @@ private:
 
 public:
   RfidCommunication();
-  void update();
-  void reset();
-
-  bool isCardDetected();
-  bool isStateZero();
-  bool isStateOne();
-  bool isFrameVerified();
-  std::string readRFID() const;
+  ~RfidCommunication() override;
+  void update() override;
+  void reset() override;
+  bool isCardDetected() override;
+  bool isStateZero() override;
+  bool isStateOne() override;
+  bool isFrameVerified() override;
+  std::string readRFID() const override;
 };
 
 #endif // RFID_COMMUNICATION_HPP

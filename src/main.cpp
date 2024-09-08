@@ -1,17 +1,12 @@
 #include <Arduino.h>
 #include <LittleFS.h>
-#include "../Domain/Services/InfrastructureServices/IFile/IFile.hpp"
-#include "../lib/Infrastructure/File/MyFile.hpp"
 #include "../Domain/Services/InfrastructureServices/IRfidCommunication/IRfidCommunication.hpp"
 #include "../lib/Infrastructure/RfidCommunication/RfidCommunication.hpp"
-#include "../lib/Business/Authentication/Authentication.hpp"
+#include "../lib/Infrastructure/RfidCommunication/RfidCommunication.cpp"
+#include "BSP.hpp"
 
-// Create instances of IFile and IRfidCommunication implementations
-IRead *fileHandler = new MyFile();                        // Ensure MyFile implements IFile
-IRfidCommunication *rfidReader = new RfidCommunication(); // Ensure RfidCommunication implements IRfidCommunication
-
-// Create an instance of Authentication with the required arguments
-Authentication *authentication = new Authentication("path/to/database", fileHandler, rfidReader);
+// Create an instance of IRfidCommunication
+IRfidCommunication *rfidReader = new RfidCommunication();
 
 void InitSystem()
 {
@@ -20,31 +15,28 @@ void InitSystem()
   {
     Serial.println("Failed to mount LittleFS");
     while (1)
-      ; // Halt if LittleFS fails to initialize
+      ;
   }
+
+  initBSP();
 }
 
 void InitApplication()
 {
-  // Initialization code for your application, if needed
 }
 
 void TestAuthentication()
 {
-  if (authentication->authenticate())
+  // Continuously run the authentication loop
+  rfidReader->update();
+  if (rfidReader->isFrameVerified())
   {
-    Serial.println("Authentication successful!");
+    Serial.println("Authentication successful");
   }
   else
   {
-    Serial.println("Authentication failed.");
+    Serial.println("Authentication failed");
   }
-}
-
-void MyProgram()
-{
-  TestAuthentication();
-  delay(1000);
 }
 
 void setup()
@@ -55,13 +47,5 @@ void setup()
 
 void loop()
 {
-  MyProgram();
-  delay(10);
-}
-
-void cleanup()
-{
-  delete authentication;
-  delete fileHandler;
-  delete rfidReader;
+  TestAuthentication();
 }

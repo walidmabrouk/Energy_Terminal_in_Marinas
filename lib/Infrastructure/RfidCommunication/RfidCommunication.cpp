@@ -1,11 +1,12 @@
-#include "RfidCommunication.hpp"
-#include <iostream>
+#include "./RfidCommunication.hpp"
 
 RfidCommunication::RfidCommunication()
-    : currentState(RfidState::IDLE), flagD0(false), flagD1(false), flagCP(false), frameIndex(0)
+    : currentState(RfidState::IDLE), flagD0(false), flagD1(false), flagCP(false), frameIndex(25)
 {
   memset(tab, 0, sizeof(tab));
 }
+
+RfidCommunication::~RfidCommunication() = default;
 
 void RfidCommunication::update()
 {
@@ -181,6 +182,7 @@ void RfidCommunication::delay800us()
 {
   delayMicroseconds(800);
 }
+
 std::string RfidCommunication::readRFID() const
 {
   std::string rfidTag;
@@ -188,6 +190,5 @@ std::string RfidCommunication::readRFID() const
   {
     rfidTag += std::to_string(tab[i]);
   }
-
   return rfidTag;
 }

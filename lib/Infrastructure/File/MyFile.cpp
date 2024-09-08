@@ -7,49 +7,64 @@ MyFile::MyFile()
 
 MyFile::~MyFile()
 {
-  // Clean up resources if needed
   closeFile();
 }
 
-std::string MyFile::readFile()
+std::string MyFile::readFile(const std::string &key, const std::string &field) const
 {
-  if (!openFileForReading())
+  std::string filePath = "/data.txt";
+
+  if (!openFileForReading(filePath))
   {
-    return ""; // or handle the error
+    return "";
   }
+
   String content;
+  std::array listOfData = []; // array vide
   while (file.available())
   {
-    content += String((char)file.read());
+    content += (char)file.read();
+    if ((char)file.read() == "/n")
+    {
+      // convert content to array with separate ; 
+      listOfData.push_back(content);
+      content = "";
+    }
   }
+  
+  
+
   closeFile();
-  return content.c_str(); // Convert to std::string if needed
+  return content.c_str();
 }
 
-void MyFile::saveData(const std::string &content)
+void MyFile::saveData(const std::string &key, const std::string &field, const std::string &content)
 {
-  if (!openFileForWriting())
+  std::string filePath = "/" + key + "_" + field + ".txt";
+
+  if (!openFileForWriting(filePath))
   {
-    // Handle the error
+    // Handle error as appropriate
     return;
   }
+
   file.print(content.c_str());
   closeFile();
 }
 
-bool MyFile::openFileForReading()
+bool MyFile::openFileForReading(const std::string &filePath) const
 {
-  file = LittleFS.open("/data.txt", "r");
+  file = LittleFS.open(filePath.c_str(), "r");
   return file;
 }
 
-bool MyFile::openFileForWriting()
+bool MyFile::openFileForWriting(const std::string &filePath)
 {
-  file = LittleFS.open("/data.txt", "w");
+  file = LittleFS.open(filePath.c_str(), "w");
   return file;
 }
 
-void MyFile::closeFile()
+void MyFile::closeFile() const
 {
   if (file)
   {

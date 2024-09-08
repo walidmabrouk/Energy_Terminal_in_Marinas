@@ -7,7 +7,6 @@ class IRfidCommunication
 {
 public:
   virtual ~IRfidCommunication() = default;
-
   virtual void update() = 0;
   virtual void reset() = 0;
   virtual bool isCardDetected() = 0;
@@ -17,4 +16,4 @@ public:
   virtual std::string readRFID() const = 0;
 };
 
-#endif
+#endif // IRFIDCOMMUNICATION_HPP
