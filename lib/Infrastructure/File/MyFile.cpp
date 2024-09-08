@@ -14,42 +14,54 @@ std::string MyFile::readFile(const std::string &key, const std::string &field) c
 {
   std::string filePath = "/data.txt";
 
-  if (!openFileForReading(filePath))
+  std::string line = findLineWithRfidTag(filePath, key);
+  if (line.empty())
   {
     return "";
   }
 
-  String content;
-  std::array listOfData = []; // array vide
-  while (file.available())
-  {
-    content += (char)file.read();
-    if ((char)file.read() == "/n")
-    {
-      // convert content to array with separate ; 
-      listOfData.push_back(content);
-      content = "";
-    }
-  }
-  
-  
-
-  closeFile();
-  return content.c_str();
+  return extractFieldFromLine(line, field);
 }
 
 void MyFile::saveData(const std::string &key, const std::string &field, const std::string &content)
 {
-  std::string filePath = "/" + key + "_" + field + ".txt";
+  std::string filePath = "/data.txt";
 
-  if (!openFileForWriting(filePath))
+  if (!openFileForReading(filePath))
   {
     // Handle error as appropriate
     return;
   }
 
-  file.print(content.c_str());
+  std::string updatedContent;
+  bool keyFound = false;
+
+  while (file.available())
+  {
+    String line = file.readStringUntil('\n');
+    std::string lineStr = line.c_str();
+
+    if (lineStr.find(key) == 0)
+    {
+      keyFound = true;
+      lineStr = key + " " + content; // Assuming content replaces entire line for simplicity
+    }
+
+    updatedContent += lineStr + "\n";
+  }
+
   closeFile();
+
+  if (keyFound)
+  {
+    if (!openFileForWriting(filePath))
+    {
+      // Handle error as appropriate
+      return;
+    }
+    file.print(updatedContent.c_str());
+    closeFile();
+  }
 }
 
 bool MyFile::openFileForReading(const std::string &filePath) const
@@ -70,4 +82,45 @@ void MyFile::closeFile() const
   {
     file.close();
   }
+}
+
+std::string MyFile::findLineWithRfidTag(const std::string &filePath, const std::string &rfidTag) const
+{
+  if (!openFileForReading(filePath))
+  {
+    return "";
+  }
+
+  String line;
+  while (file.available())
+  {
+    line = file.readStringUntil('\n');
+    std::string lineStr = line.c_str();
+    if (lineStr.find(rfidTag) == 0)
+    {
+      closeFile();
+      return lineStr;
+    }
+  }
+
+  closeFile();
+  return "";
+}
+
+std::string MyFile::extractFieldFromLine(const std::string &line, const std::string &field) const
+{
+  // Assuming a simple delimiter-based extraction for demonstration purposes
+  std::istringstream iss(line);
+  std::string token;
+
+  while (std::getline(iss, token, ' '))
+  {
+    if (token == field)
+    {
+      std::getline(iss, token, ' ');
+      return token;
+    }
+  }
+
+  return "";
 }

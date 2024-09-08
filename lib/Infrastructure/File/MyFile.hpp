@@ -3,6 +3,7 @@
 
 #include <string>
 #include <LittleFS.h>
+#include <sstream> 
 #include "../Domain/Services/InfrastructureServices/IFile/IFile.hpp"
 
 class MyFile : public IFile
@@ -18,7 +19,9 @@ private:
   bool openFileForReading(const std::string &filePath) const;
   bool openFileForWriting(const std::string &filePath);
   void closeFile() const;
+
   std::string findLineWithRfidTag(const std::string &filePath, const std::string &rfidTag) const;
+  std::string extractFieldFromLine(const std::string &line, const std::string &field) const;
 
   mutable fs::File file;
 };
