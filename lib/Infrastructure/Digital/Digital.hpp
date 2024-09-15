@@ -7,8 +7,8 @@
 class Digital : public IDigital
 {
 public:
-  void digitalWrite(unsigned char address, unsigned char value) override;
-  unsigned char digitalRead(unsigned char address) const override;
+  void digitalWrite(uint8_t address, uint8_t value) override;
+  uint8_t digitalRead(uint8_t address) const override;
 };
 
 #endif // DIGITAL_HPP

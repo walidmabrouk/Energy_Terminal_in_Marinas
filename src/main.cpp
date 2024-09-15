@@ -1,42 +1,30 @@
 #include <Arduino.h>
-#include <LittleFS.h>
-#include "../Domain/Services/InfrastructureServices/IRfidCommunication/IRfidCommunication.hpp"
+#include "BSP.hpp"
 #include "../lib/Infrastructure/RfidCommunication/RfidCommunication.hpp"
 #include "../lib/Infrastructure/RfidCommunication/RfidCommunication.cpp"
-#include "BSP.hpp"
+#include "../lib/Infrastructure/Digital/Digital.hpp"
+#include "../lib/Infrastructure/Digital/Digital.cpp"
+#include "../lib/Domain/Services/InfrastructureServices/IRfidCommunication/IRfidCommunication.hpp"
+#include "../lib/Domain/Services/InfrastructureServices/IDigital/IDigital.hpp"
 
-// Create an instance of IRfidCommunication
-IRfidCommunication *rfidReader = new RfidCommunication();
+// Instantiate objects
+Digital digital;
+RfidCommunication rfidReader(digital);
 
 void InitSystem()
 {
   Serial.begin(115200);
-  if (!LittleFS.begin())
-  {
-    Serial.println("Failed to mount LittleFS");
-    while (1)
-      ;
-  }
-
   initBSP();
 }
 
 void InitApplication()
 {
+  // Application-specific initialization if needed
 }
 
 void TestAuthentication()
 {
-  // Continuously run the authentication loop
-  rfidReader->update();
-  if (rfidReader->isFrameVerified())
-  {
-    Serial.println("Authentication successful");
-  }
-  else
-  {
-    Serial.println("Authentication failed");
-  }
+  rfidReader.update();
 }
 
 void setup()
@@ -48,4 +36,5 @@ void setup()
 void loop()
 {
   TestAuthentication();
+  delay(50000);
 }

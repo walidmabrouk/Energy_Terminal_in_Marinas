@@ -3,6 +3,8 @@
 
 #include <Arduino.h>
 #include "../../Domain/Services/InfrastructureServices/IRfidCommunication/IRfidCommunication.hpp"
+#include "../../Domain/Services/InfrastructureServices/IDigital/IDigital.hpp"
+#include "../../include/BSP.hpp"
 
 enum class RfidState
 {
@@ -19,33 +21,35 @@ class RfidCommunication : public IRfidCommunication
 {
 private:
   RfidState currentState;
-  bool flagD0;
-  bool flagD1;
+  IDigital &digital;
+  volatile bool flagD0;
+  volatile bool flagD1;
   bool flagCP;
   bool TrameIsOK;
   int frameIndex;
   int tab[26];
+
 
   void handleIdle();
   void handleCardDetected();
   void handleStateZero();
   void handleStateOne();
   void handleReceptionComplete();
-  void handleFrameVerified();
+  bool handleFrameVerified();
   void delay250ms();
   void delay800us();
   bool checkEvenParity(int start, int end);
   bool checkOddParity(int start, int end);
 
 public:
-  RfidCommunication();
+  explicit RfidCommunication(IDigital &digital);
   ~RfidCommunication() override;
+
   void update() override;
   void reset() override;
   bool isCardDetected() override;
   bool isStateZero() override;
   bool isStateOne() override;
-  bool isFrameVerified() override;
   std::string readRFID() const override;
 };
 

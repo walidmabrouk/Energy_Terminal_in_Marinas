@@ -1,11 +1,11 @@
 #include "Digital.hpp"
 
-void Digital::digitalWrite(unsigned char address, unsigned char value)
+void Digital::digitalWrite(uint8_t address, uint8_t value)
 {
   ::digitalWrite(address, value);
 }
 
-unsigned char Digital::digitalRead(unsigned char address) const
+uint8_t Digital::digitalRead(uint8_t address) const
 {
-  return ::digitalRead(address); 
+  return ::digitalRead(address);
 }
