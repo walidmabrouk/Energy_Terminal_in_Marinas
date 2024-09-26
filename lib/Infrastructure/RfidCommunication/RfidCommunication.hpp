@@ -2,55 +2,90 @@
 #define RFID_COMMUNICATION_HPP
 
 #include <Arduino.h>
-#include "../../Domain/Services/InfrastructureServices/IRfidCommunication/IRfidCommunication.hpp"
-#include "../../Domain/Services/InfrastructureServices/IDigital/IDigital.hpp"
-#include "../../include/BSP.hpp"
+#include "BSP.hpp"
 
-enum class RfidState
+class RfidState;
+
+class RfidCommunication
 {
-  IDLE,
-  CARD_DETECTED,
-  STATE_ZERO,
-  STATE_ONE,
-  RECEPTION_COMPLETE,
-  FRAME_VERIFIED,
-  CODE_RECEIVED
+public:
+  enum class Event
+  {
+    BIT_RECEIVED,
+    TIMEOUT,
+    CARD_DETECTED,
+    INVALID_PARITY
+  };
+
+  enum class StateId
+  {
+    IDLE,
+    RECEIVING,
+    PROCESSING
+  };
+
+  static const uint8_t WIEGAND_BIT_COUNT = 34;
+  static const uint32_t TIMEOUT_MS = 20;
+
+  RfidCommunication(BSP &bsp, uint8_t data0Pin, uint8_t data1Pin, uint8_t cpPin);
+  void begin();
+  void handleEvent(Event event);
+  bool isCardDetected() const;
+  uint32_t getCardId() const;
+  bool isValid() const;
+
+private:
+  static RfidCommunication *_instance;
+  static void IRAM_ATTR data0Interrupt();
+  static void IRAM_ATTR data1Interrupt();
+  static void IRAM_ATTR cpInterrupt();
+
+  void addBit(bool bit);
+  bool validateParity();
+  void changeState(RfidState *newState, StateId newStateId);
+
+  BSP &_bsp;
+  uint8_t _data0Pin;
+  uint8_t _data1Pin;
+  uint8_t _cpPin;
+
+  RfidState *_currentState;
+  StateId _currentStateId;
+  uint64_t _cardData;
+  uint32_t _lastBitTime;
+  uint8_t _bitCount;
+  bool _isValid;
+  uint32_t _cardId;
+
+  friend class RfidState;
+  friend class IdleState;
+  friend class ReceivingState;
+  friend class ProcessingState;
 };
 
-class RfidCommunication : public IRfidCommunication
+class RfidState
 {
-private:
-  RfidState currentState;
-  IDigital &digital;
-  volatile bool flagD0;
-  volatile bool flagD1;
-  bool flagCP;
-  bool TrameIsOK;
-  int frameIndex;
-  int tab[26];
-
-
-  void handleIdle();
-  void handleCardDetected();
-  void handleStateZero();
-  void handleStateOne();
-  void handleReceptionComplete();
-  bool handleFrameVerified();
-  void delay250ms();
-  void delay800us();
-  bool checkEvenParity(int start, int end);
-  bool checkOddParity(int start, int end);
-
 public:
-  explicit RfidCommunication(IDigital &digital);
-  ~RfidCommunication() override;
+  virtual ~RfidState() = default;
+  virtual void handleEvent(RfidCommunication &rfid, RfidCommunication::Event event) = 0;
+};
 
-  void update() override;
-  void reset() override;
-  bool isCardDetected() override;
-  bool isStateZero() override;
-  bool isStateOne() override;
-  std::string readRFID() const override;
+class IdleState : public RfidState
+{
+public:
+  void handleEvent(RfidCommunication &rfid, RfidCommunication::Event event) override;
+};
+
+class ReceivingState : public RfidState
+{
+public:
+  void handleEvent(RfidCommunication &rfid, RfidCommunication::Event event) override;
+};
+
+class ProcessingState : public RfidState
+{
+public:
+  void handleEvent(RfidCommunication &rfid, RfidCommunication::Event event) override;
 };
 
 #endif // RFID_COMMUNICATION_HPP

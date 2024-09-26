@@ -1,219 +1,189 @@
 #include "RfidCommunication.hpp"
-#include <Arduino.h>
 
-RfidCommunication::RfidCommunication(IDigital &digital)
-    : currentState(RfidState::IDLE), digital(digital), flagCP(false), frameIndex(25), TrameIsOK(false)
+RfidCommunication *RfidCommunication::_instance = nullptr;
+
+RfidCommunication::RfidCommunication(BSP &bsp, uint8_t data0Pin, uint8_t data1Pin, uint8_t cpPin)
+    : _bsp(bsp), _data0Pin(data0Pin), _data1Pin(data1Pin), _cpPin(cpPin),
+      _currentState(new IdleState()), _currentStateId(StateId::IDLE),
+      _cardData(0), _lastBitTime(0), _isValid(false), _cardId(0), _bitCount(0)
 {
-  memset(tab, 0, sizeof(tab));
-  Serial.println("RfidCommunication initialized");
+  _instance = this;
 }
 
-RfidCommunication::~RfidCommunication()
+void RfidCommunication::begin()
 {
-  Serial.println("RfidCommunication destroyed");
+  _bsp.pinMode(_data0Pin, INPUT_PULLUP);
+  _bsp.pinMode(_data1Pin, INPUT_PULLUP);
+  _bsp.pinMode(_cpPin, INPUT_PULLUP);
+  _bsp.attachInterrupt(_data0Pin, data0Interrupt, FALLING);
+  _bsp.attachInterrupt(_data1Pin, data1Interrupt, FALLING);
+  _bsp.attachInterrupt(_cpPin, cpInterrupt, FALLING);
 }
 
-void RfidCommunication::update()
+void RfidCommunication::handleEvent(Event event)
 {
-  Serial.print("Current state: ");
-  Serial.println(static_cast<int>(currentState)); // Debug state value
+  _currentState->handleEvent(*this, event);
+}
 
-  switch (currentState)
+bool RfidCommunication::isCardDetected() const
+{
+  return _currentStateId == StateId::PROCESSING;
+}
+
+uint32_t RfidCommunication::getCardId() const
+{
+  return _cardId;
+}
+
+bool RfidCommunication::isValid() const
+{
+  return _isValid;
+}
+
+void IRAM_ATTR RfidCommunication::data0Interrupt()
+{
+  if (_instance)
   {
-  case RfidState::IDLE:
-    handleIdle();
-    break;
-  case RfidState::CARD_DETECTED:
-    handleCardDetected();
-    break;
-  case RfidState::STATE_ZERO:
-    handleStateZero();
-    break;
-  case RfidState::STATE_ONE:
-    handleStateOne();
-    break;
-  case RfidState::RECEPTION_COMPLETE:
-    handleReceptionComplete();
-    break;
-  case RfidState::FRAME_VERIFIED:
-    handleFrameVerified();
-    break;
-  case RfidState::CODE_RECEIVED:
-    readRFID();
-    break;
+    _instance->addBit(0);
   }
 }
 
-void RfidCommunication::handleIdle()
+void IRAM_ATTR RfidCommunication::data1Interrupt()
 {
-  Serial.println("Handling IDLE state");
-  if (isCardDetected())
+  if (_instance)
   {
-    Serial.println("Card detected");
-    reset();
-    //delay250ms();
-    currentState = RfidState::CARD_DETECTED;
+    _instance->addBit(1);
   }
 }
 
-void RfidCommunication::handleCardDetected()
+void IRAM_ATTR RfidCommunication::cpInterrupt()
 {
-  Serial.println("Handling CARD_DETECTED state");
-  if (isStateZero())
+  if (_instance)
   {
-    Serial.println("State Zero detected");
-    tab[frameIndex] = 0;
-    flagD0 = false;
-    frameIndex--;
-    delay800us();
-    currentState = RfidState::STATE_ZERO;
-  }
-  else if (isStateOne())
-  {
-    Serial.println("State One detected");
-    tab[frameIndex] = 1;
-    flagD1 = false;
-    frameIndex--;
-    delay800us();
-    currentState = RfidState::STATE_ONE;
+    _instance->handleEvent(Event::CARD_DETECTED);
   }
 }
 
-void RfidCommunication::handleStateZero()
+void RfidCommunication::addBit(bool bit)
 {
-  Serial.print("Handling STATE_ZERO, frameIndex: ");
-  Serial.println(frameIndex);
-  currentState = (frameIndex <= 0) ? RfidState::RECEPTION_COMPLETE : RfidState::CARD_DETECTED;
-}
-
-void RfidCommunication::handleStateOne()
-{
-  Serial.print("Handling STATE_ONE, frameIndex: ");
-  Serial.println(frameIndex);
-  currentState = (frameIndex <= 0) ? RfidState::RECEPTION_COMPLETE : RfidState::CARD_DETECTED;
-}
-
-void RfidCommunication::handleReceptionComplete()
-{
-  Serial.println("Reception complete: 26 bits received");
-  currentState = RfidState::FRAME_VERIFIED;
-}
-
-bool RfidCommunication::handleFrameVerified()
-{
-  Serial.println("Verifying frame");
-
-  const int MSB_START = 13;
-  const int MSB_END = 24;
-  const int LSB_START = 1;
-  const int LSB_END = 12;
-
-  bool isMsbEvenParity = checkEvenParity(MSB_START, MSB_END);
-  bool isLsbOddParity = checkOddParity(LSB_START, LSB_END);
-
-  if (isMsbEvenParity && isLsbOddParity)
+  if (_bitCount < WIEGAND_BIT_COUNT)
   {
-    Serial.println("Frame verified successfully");
-    TrameIsOK = true;
-    currentState = RfidState::CODE_RECEIVED;
-  }
-  else
-  {
-    Serial.println("Frame verification failed");
-    TrameIsOK = false;
-    currentState = RfidState::IDLE;
-  }
-  return TrameIsOK;
-}
+    _cardData <<= 1;
+    _cardData |= bit ? 1 : 0;
+    _bitCount++;
+    _lastBitTime = _bsp.millis();
 
-bool RfidCommunication::checkEvenParity(int start, int end)
-{
-  int bitCount = 0;
-  for (int i = start; i <= end; ++i)
-  {
-    if (tab[i] == 1)
+    if (_bitCount == WIEGAND_BIT_COUNT)
     {
-      ++bitCount;
+      handleEvent(Event::BIT_RECEIVED);
     }
   }
-  Serial.print("Even parity check, bit count: ");
-  Serial.println(bitCount);
-  return (bitCount % 2 == 0);
 }
 
-bool RfidCommunication::checkOddParity(int start, int end)
+bool RfidCommunication::validateParity()
 {
-  int bitCount = 0;
-  for (int i = start; i <= end; ++i)
+  uint64_t data = _cardData & 0x3FFFFFFFFULL; // 34 bits
+  bool evenParity = (_cardData >> 33) & 1;
+  bool oddParity = _cardData & 1;
+
+  uint8_t calculatedEvenParity = 0;
+  uint8_t calculatedOddParity = 1; // Initialize to 1 for odd parity
+
+  // Calculate even parity (bits 2-17)
+  for (int i = 1; i <= 16; i++)
   {
-    if (tab[i] == 1)
+    calculatedEvenParity ^= (data >> (32 - i)) & 1;
+  }
+
+  // Calculate odd parity (bits 18-33)
+  for (int i = 17; i <= 32; i++)
+  {
+    calculatedOddParity ^= (data >> (32 - i)) & 1;
+  }
+
+  _bsp.println("Parity Validation Details:");
+  _bsp.printf("Received Even Parity: %d, Calculated: %d\n", evenParity, calculatedEvenParity);
+  _bsp.printf("Received Odd Parity: %d, Calculated: %d\n", oddParity, calculatedOddParity);
+  _bsp.printf("Even Parity Valid: %s, Odd Parity Valid: %s\n",
+              evenParity == calculatedEvenParity ? "Yes" : "No",
+              oddParity == calculatedOddParity ? "Yes" : "No");
+
+  return (evenParity == calculatedEvenParity) && (oddParity == calculatedOddParity);
+}
+
+void RfidCommunication::changeState(RfidState *newState, StateId newStateId)
+{
+  delete _currentState;
+  _currentState = newState;
+  _currentStateId = newStateId;
+}
+
+void IdleState::handleEvent(RfidCommunication &rfid, RfidCommunication::Event event)
+{
+  switch (event)
+  {
+  case RfidCommunication::Event::BIT_RECEIVED:
+    rfid.changeState(new ReceivingState(), RfidCommunication::StateId::RECEIVING);
+    break;
+  case RfidCommunication::Event::CARD_DETECTED:
+    rfid._bsp.println("Card detected in idle state");
+    break;
+  default:
+    break;
+  }
+}
+
+void ReceivingState::handleEvent(RfidCommunication &rfid, RfidCommunication::Event event)
+{
+  switch (event)
+  {
+  case RfidCommunication::Event::BIT_RECEIVED:
+    if (rfid._bitCount == RfidCommunication::WIEGAND_BIT_COUNT)
     {
-      ++bitCount;
+      rfid.changeState(new ProcessingState(), RfidCommunication::StateId::PROCESSING);
+      rfid.handleEvent(RfidCommunication::Event::TIMEOUT);
     }
-  }
-  Serial.print("Odd parity check, bit count: ");
-  Serial.println(bitCount);
-  return (bitCount % 2 != 0);
-}
-
-bool RfidCommunication::isCardDetected()
-{
-  while(1)
-  {
-    flagCP = digital.digitalRead(BSP::RFID_PIN_CP);
-    if (flagCP == LOW)
+    break;
+  case RfidCommunication::Event::TIMEOUT:
+    if (rfid._bsp.millis() - rfid._lastBitTime >= RfidCommunication::TIMEOUT_MS)
     {
-      break;
+      rfid.changeState(new ProcessingState(), RfidCommunication::StateId::PROCESSING);
+      rfid.handleEvent(RfidCommunication::Event::TIMEOUT);
     }
+    break;
+  default:
+    break;
   }
-  Serial.print("Card detected (CP): ");
-  Serial.println(!flagCP);
-  return !flagCP;
 }
 
-bool RfidCommunication::isStateZero()
+void ProcessingState::handleEvent(RfidCommunication &rfid, RfidCommunication::Event event)
 {
-  bool state = digital.digitalRead(BSP::RFID_PIN_DATA_0);
-  Serial.print("State Zero (D0): ");
-  Serial.println(!state);
-  return !state;
-}
-
-bool RfidCommunication::isStateOne()
-{
-  bool state = digital.digitalRead(BSP::RFID_PIN_DATA_1);
-  Serial.print("State One (D1): ");
-  Serial.println(!state);
-  return !state;
-}
-
-void RfidCommunication::delay250ms()
-{
-  Serial.println("Delaying for 250ms");
-  delay(250);
-}
-
-void RfidCommunication::delay800us()
-{
-  Serial.println("Delaying for 800us");
-  delayMicroseconds(800);
-}
-
-void RfidCommunication::reset()
-{
-  Serial.println("Resetting RFID communication");
-  frameIndex = 25;
-  memset(tab, 0, sizeof(tab));
-}
-
-std::string RfidCommunication::readRFID() const
-{
-  std::string rfidTag;
-  for (int i = 1; i <= 24; ++i)
+  switch (event)
   {
-    rfidTag += std::to_string(tab[i]);
+  case RfidCommunication::Event::TIMEOUT:
+    rfid._bsp.printf("Complete bits received: %010llX\n", rfid._cardData);
+
+    rfid._isValid = rfid.validateParity();
+    if (rfid._isValid)
+    {
+      rfid._cardId = (rfid._cardData >> 1) & 0xFFFFFFFF; // Extract 32-bit card ID
+      rfid._bsp.println("Valid tag detected!");
+      rfid._bsp.printf("Card ID: %u (0x%08X)\n", rfid._cardId, rfid._cardId);
+    }
+    else
+    {
+      rfid._bsp.println("Parity error, invalid tag.");
+      rfid.handleEvent(RfidCommunication::Event::INVALID_PARITY);
+    }
+    rfid._bitCount = 0;
+    rfid._cardData = 0;
+    rfid.changeState(new IdleState(), RfidCommunication::StateId::IDLE);
+    break;
+  case RfidCommunication::Event::INVALID_PARITY:
+    rfid._cardId = 0;
+    rfid._isValid = false;
+    break;
+  default:
+    break;
   }
-  Serial.print("RFID Tag read: ");
-  Serial.println(rfidTag.c_str());
-  return rfidTag;
 }
